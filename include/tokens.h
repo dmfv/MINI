@@ -61,6 +61,13 @@ void copy_to_arr(ParsedTokensArr* arr, ParsedToken* token) {
         sizeof(ParsedToken));
 }
 
+void deinit_parsed_tokens_arr(ParsedTokensArr* arr) {
+    arr->size = 0;
+    arr->capacity = 0;
+    free(arr->tokens);
+    arr->tokens = NULL;
+}
+
 bool is_valid_numeric_const(const String* text) {
     // we do not protects from NULL ptr
     const char last_char = text->str[text->size - 1];
@@ -143,11 +150,56 @@ bool is_valid_div_reminder_wholly(const String* text) {
     return is_valid_single_char_token_wholly(text, '%', 1);
 }
 
+bool is_valid_identifier(const String* text) {
+    const char last_char = text->str[text->size - 1];
+    return (last_char >= 'A' && last_char <= 'z')
+        || (last_char >= '0' && last_char <= '9')
+        || (text->size != 0 && last_char == '-')
+        || (last_char == '_');
+}
+
+bool is_valid_identifier_wholly(const String* text) {
+    /*
+        backup
+        const char last_char = text->str[text->size - 1];
+        return (last_char >= 'A' && last_char <= 'z')
+            || (last_char >= '0' && last_char <= '9')
+            || (text->size != 0 && last_char == '-')
+            || (last_char == '_');
+     */
+    String prefix = {.str = text->str, .size = 1};
+    for (; prefix.size <= text->size; ++prefix.size) {
+        if (!is_valid_identifier(&prefix)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool is_valid_eq_sign(const String* text) {
+    if (text->size > 2) return false;
+    return is_valid_single_char_token(text, '=');
+}
+
+bool is_valid_eq_sign_wholly(const String* text) {
+    return is_valid_single_char_token_wholly(text, '=', 2);
+}
+
+bool is_valid_assign(const String* text) {
+    if (text->size > 1) return false;
+    return is_valid_single_char_token(text, '=');
+}
+
+bool is_valid_assign_wholly(const String* text) {
+    if (text->size > 1) return false;
+    return is_valid_single_char_token_wholly(text, '=', 1);
+}
+
 // TODO: maybe add 
 
 // order of tokens in this arr is 
 // reflect their priority 
-const Token AVAILABLE_TOKENS[7] = {
+const Token AVAILABLE_TOKENS[10] = {
     {
         .name = "numeric constant",
         .prefixIsValid = is_valid_numeric_const,
@@ -182,5 +234,20 @@ const Token AVAILABLE_TOKENS[7] = {
         .name = "division reminder",
         .prefixIsValid = is_valid_div_reminder,
         .wholeTokenValid = is_valid_div_reminder_wholly,
+    },
+    {
+        .name = "identifier",
+        .prefixIsValid = is_valid_identifier,
+        .wholeTokenValid = is_valid_identifier_wholly,
+    },
+    {
+        .name = "eq '=='",
+        .prefixIsValid = is_valid_eq_sign,
+        .wholeTokenValid = is_valid_eq_sign_wholly,
+    },
+    {
+        .name = "assign '='",
+        .prefixIsValid = is_valid_assign,
+        .wholeTokenValid = is_valid_assign_wholly,
     }
 };

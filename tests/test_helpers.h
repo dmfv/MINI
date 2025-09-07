@@ -34,7 +34,7 @@ static void add_new_log_line(const char* text) {
 }
 
 ///////////////////////// COMPARATORS AND HELPERS /////////////////////////
-static int my_strcmp(const String* l, const char* r) {
+static int my_strcmp_string(const String* l, const char* r) {
     uint64_t l_size = l->size;
     uint64_t r_size = my_strlen(r);
     if (l_size != r_size) return -1;
@@ -56,7 +56,7 @@ static int my_strcmp(const String* l, const char* r) {
 } while(0)
 
 #define ASSERT_STRING_EQ_C_STRING(l, r) do { \
-    if (my_strcmp(&(l), (r)) != 0) { \
+    if (my_strcmp_string(&(l), (r)) != 0) { \
         char buf[256]; \
         snprintf(buf, sizeof(buf), \
             ANSI_COLOR_RED "ASSERT_STRING_EQ_C_STRING failed: %s=\"%.*s\", %s=\"%s\"" ANSI_COLOR_RESET, \
@@ -72,6 +72,7 @@ void run_tests();  // must be defined in test file
 
 int main(void) {
     printf(ANSI_COLOR_CYAN "Run tests\n" ANSI_COLOR_RESET);
+
     run_tests();
 
     if (GLOBAL_ERRORS.errors_counter > 0) {

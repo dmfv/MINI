@@ -21,6 +21,10 @@ void* my_memcpy(void* dest, void* src, uint64_t size) {
     return memcpy(dest, src, size);
 }
 
+int my_strcmp(const char* l, const char* r) {
+    return strcmp(l, r);
+}
+
 uint64_t my_strlen(const char* str) {
     uint64_t size = 0;
     if (str == NULL) return size;
