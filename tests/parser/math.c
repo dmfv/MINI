@@ -64,4 +64,8 @@ TEST(parse_div_reminder_operation) {
 void run_tests() {
     test_parse_plus_operation();
     test_parse_minus_operation();
+    test_parse_power_operation();
+    test_parse_mul_operation();
+    test_parse_div_operation();
+    test_parse_div_reminder_operation();
 }
