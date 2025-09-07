@@ -1,3 +1,6 @@
+#ifndef TOKENS_H
+#define TOKENS_H
+
 #include "utils.h"
 
 typedef struct {
@@ -251,3 +254,5 @@ const Token AVAILABLE_TOKENS[10] = {
         .wholeTokenValid = is_valid_assign_wholly,
     }
 };
+
+#endif

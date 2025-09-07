@@ -1,5 +1,5 @@
 #include <stdio.h>  // for printf
-#include "include/parser.h"
+#include "include/lexer.h"
 
 
 int main() {

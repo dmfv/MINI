@@ -1,4 +1,4 @@
-#include "include/parser.h"
+#include "include/lexer.h"
 #include "tests/test_helpers.h"
 
 ///////////////////////// TESTS /////////////////////////
