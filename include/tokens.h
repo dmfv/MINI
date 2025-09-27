@@ -3,10 +3,37 @@
 
 #include "utils.h"
 
+typedef enum {
+    // math
+    PLUS,      // +
+    MINUS,     // -
+    MULTIPLY,  // *
+    POW,       // **
+    DIVISION,  // /
+    DIVISION_REMINDER,  // %
+
+    // bolean logic
+    ASSIGN,   // =
+    EQ,       // ==
+    NOT_EQ,   // !=
+    NOT,  // not
+    AND,  // and
+    OR,   // or
+    LESS,     // <
+    LESS_EQ,  // <=
+    GREATER,  // >
+    GREATER_EQ,  // >=
+
+    // othes
+    NUMBER,       // 42
+    IDENTIFIER,   // abc
+    OPEN_PAREN,   // (
+    CLOSE_PAREN,  // (
+} TokenType;
+
 typedef struct {
-    const char* name;
-    bool (*prefixIsValid)(const String*);    // validate that next symbol could be a part of token (abc - can't be in numeric consts)
-    bool (*wholeTokenValid)(const String*);  // validate if the whole token is valid
+    String text;
+    TokenType type;
 } Token;
 
 typedef struct {
@@ -15,12 +42,7 @@ typedef struct {
 } TokensArr;
 
 typedef struct {
-    const Token* token;
-    String text;
-} ParsedToken;
-
-typedef struct {
-    ParsedToken* tokens;
+    Token* tokens;
     uint64_t size;
     uint64_t capacity;
 } ParsedTokensArr;
@@ -55,13 +77,13 @@ void copy_to_any_arr(void** arr, uint64_t* size, uint64_t* capacity, void* what_
     *size += 1;
 }
 
-void copy_to_arr(ParsedTokensArr* arr, ParsedToken* token) {
+void copy_to_arr(ParsedTokensArr* arr, Token* token) {
     return copy_to_any_arr(
         (void*)&arr->tokens,
         &arr->size, 
         &arr->capacity, 
         (void*)token, 
-        sizeof(ParsedToken));
+        sizeof(Token));
 }
 
 void deinit_parsed_tokens_arr(ParsedTokensArr* arr) {
@@ -70,189 +92,5 @@ void deinit_parsed_tokens_arr(ParsedTokensArr* arr) {
     free(arr->tokens);
     arr->tokens = NULL;
 }
-
-bool is_valid_numeric_const(const String* text) {
-    // we do not protects from NULL ptr
-    const char last_char = text->str[text->size - 1];
-    return last_char >= '0' && last_char <= '9';
-}
-
-bool is_valid_numeric_const_wholly(const String* text) {
-    // we do not protects from NULL ptr
-    String prefix = {.str = text->str, .size = 1};
-    for (; prefix.size <= text->size; ++prefix.size) {
-        if (!is_valid_numeric_const(&prefix)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool is_valid_single_char_token(const String* text, char valid_symbol) {
-    const char last_char = text->str[text->size - 1];
-    return last_char == valid_symbol;
-}
-
-bool is_valid_single_char_token_wholly(const String* text, char valid_symbol, uint64_t max_length /* max possible repits */) {
-    String prefix = {.str = text->str, .size = 1};
-    for (; prefix.size <= text->size; ++prefix.size) {
-        if (!is_valid_single_char_token(&prefix, valid_symbol) || text->size > max_length) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool is_valid_plus(const String* text) {
-    return is_valid_single_char_token(text, '+');
-}
-
-bool is_valid_plus_wholly(const String* text) {
-    return is_valid_single_char_token_wholly(text, '+', 1);
-}
-
-bool is_valid_minus(const String* text) {
-    return is_valid_single_char_token(text, '-');
-}
-
-bool is_valid_minus_wholly(const String* text) {
-    return is_valid_single_char_token_wholly(text, '-', 1);
-}
-
-bool is_valid_pow(const String* text) {
-    if (text->size > 2) return false;
-    return is_valid_single_char_token(text, '*');
-}
-
-bool is_valid_pow_wholly(const String* text) {
-    if (text->size != 2) return false;
-    return is_valid_single_char_token_wholly(text, '*', 2);
-}
-
-bool is_valid_mul(const String* text) {
-    return is_valid_single_char_token(text, '*');
-}
-
-bool is_valid_mul_wholly(const String* text) {
-    return is_valid_single_char_token_wholly(text, '*', 1);
-}
-
-bool is_valid_div(const String* text) {
-    return is_valid_single_char_token(text, '/');
-}
-
-bool is_valid_div_wholly(const String* text) {
-    return is_valid_single_char_token_wholly(text, '/', 1);
-}
-
-bool is_valid_div_reminder(const String* text) {
-    return is_valid_single_char_token(text, '%');
-}
-
-bool is_valid_div_reminder_wholly(const String* text) {
-    return is_valid_single_char_token_wholly(text, '%', 1);
-}
-
-bool is_valid_identifier(const String* text) {
-    const char last_char = text->str[text->size - 1];
-    return (last_char >= 'A' && last_char <= 'z')
-        || (last_char >= '0' && last_char <= '9')
-        || (text->size != 0 && last_char == '-')
-        || (last_char == '_');
-}
-
-bool is_valid_identifier_wholly(const String* text) {
-    /*
-        backup
-        const char last_char = text->str[text->size - 1];
-        return (last_char >= 'A' && last_char <= 'z')
-            || (last_char >= '0' && last_char <= '9')
-            || (text->size != 0 && last_char == '-')
-            || (last_char == '_');
-     */
-    String prefix = {.str = text->str, .size = 1};
-    for (; prefix.size <= text->size; ++prefix.size) {
-        if (!is_valid_identifier(&prefix)) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool is_valid_eq_sign(const String* text) {
-    if (text->size > 2) return false;
-    return is_valid_single_char_token(text, '=');
-}
-
-bool is_valid_eq_sign_wholly(const String* text) {
-    return is_valid_single_char_token_wholly(text, '=', 2);
-}
-
-bool is_valid_assign(const String* text) {
-    if (text->size > 1) return false;
-    return is_valid_single_char_token(text, '=');
-}
-
-bool is_valid_assign_wholly(const String* text) {
-    if (text->size > 1) return false;
-    return is_valid_single_char_token_wholly(text, '=', 1);
-}
-
-// TODO: maybe add 
-
-// order of tokens in this arr is 
-// reflect their priority 
-const Token AVAILABLE_TOKENS[10] = {
-    {
-        .name = "numeric constant",
-        .prefixIsValid = is_valid_numeric_const,
-        .wholeTokenValid = is_valid_numeric_const_wholly,
-    },
-    {
-        .name = "plus",
-        .prefixIsValid = is_valid_plus,
-        .wholeTokenValid = is_valid_plus_wholly,
-    },
-    {
-        .name = "minus",
-        .prefixIsValid = is_valid_minus,
-        .wholeTokenValid = is_valid_minus_wholly,
-    },
-    {
-        .name = "pow",
-        .prefixIsValid = is_valid_pow,
-        .wholeTokenValid = is_valid_pow_wholly,
-    },
-    {
-        .name = "multiply",
-        .prefixIsValid = is_valid_mul,
-        .wholeTokenValid = is_valid_mul_wholly,
-    },
-    {
-        .name = "division",
-        .prefixIsValid = is_valid_div,
-        .wholeTokenValid = is_valid_div_wholly,
-    },
-    {
-        .name = "division reminder",
-        .prefixIsValid = is_valid_div_reminder,
-        .wholeTokenValid = is_valid_div_reminder_wholly,
-    },
-    {
-        .name = "identifier",
-        .prefixIsValid = is_valid_identifier,
-        .wholeTokenValid = is_valid_identifier_wholly,
-    },
-    {
-        .name = "eq '=='",
-        .prefixIsValid = is_valid_eq_sign,
-        .wholeTokenValid = is_valid_eq_sign_wholly,
-    },
-    {
-        .name = "assign '='",
-        .prefixIsValid = is_valid_assign,
-        .wholeTokenValid = is_valid_assign_wholly,
-    }
-};
 
 #endif

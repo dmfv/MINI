@@ -81,44 +81,136 @@
 #include "tokens.h"
 
 typedef struct {
+    Token val;
     bool has_token;
-    ParsedToken val;
 } TokenOpt;
 
-TokenOpt try_to_parse_token(const String* text, const Token* available_tokens, uint64_t available_tokens_size, String* error) {
-    TokenOpt parsed_token = {.has_token = false};
-    if (available_tokens == NULL) {
+bool match_and_iterate(char r, char l, String* str) {
+    if (r == l) {
+        str->size += 1;
+        return true;
+    }
+    return false;
+}
+
+bool match_word_and_iterate(const String r, const char l[], String* str) {
+    uint64_t l_size = my_strlen(l);
+    for (uint64_t i = 0; i < r.size && i < l_size; ++i) {
+        if (r.str[i] != l[i]) {
+            return false;
+        }
+    }
+    str->size += l_size;
+    return true;
+}
+
+bool is_digit(char ch) {
+    return ch >= '0' && ch <= '9';
+}
+
+bool is_alpha(char ch) {
+    return (ch >= 'a' && ch <= 'z') 
+        || (ch >= 'A' && ch <= 'Z');
+}
+
+// identifier can start only with char but inside can have [a-zA-Z0-9-_]
+bool is_ident_body_symbol(char ch) {
+    return ch == '-' 
+        || ch == '_' 
+        || is_digit(ch) 
+        || is_alpha(ch);
+}
+
+TokenOpt try_to_parse_token(const String* text, String* error) {
+    TokenOpt parsed_token = {.has_token = true};
+    String* token_str = &parsed_token.val.text;
+    token_str->str = text->str;
+    token_str->size = 0;
+    if (text->size == 0) {
+        parsed_token.has_token = false;
         return parsed_token;
     }
-    String temp_str = {.str = text->str, .size = 0};
-    for (uint64_t i = 0; i < available_tokens_size; ++i) {  // TODO: think about optimization of this
-        for (uint64_t j = 0; j < text->size && text->str[j]; ++j) {
-            temp_str.size = j + 1;
-            if (available_tokens[i].prefixIsValid(&temp_str)) {
-                continue;
-            } else {
-                temp_str.size = j;  // take previous length (cause j-th symbol won't be a part of valid token)
-                if (j > 0 && available_tokens[i].wholeTokenValid(&temp_str)) {
-                    parsed_token.has_token = true;
-                    parsed_token.val.text = temp_str;
-                    parsed_token.val.token = &available_tokens[i];
-                    return parsed_token;
-                }
-            }
-        }
-        // process last in the line/text
-        // TODO: think to move this to separate func mb
-        if (available_tokens[i].wholeTokenValid(&temp_str)) {
-            parsed_token.has_token = true;
-            parsed_token.val.text = temp_str;
-            parsed_token.val.token = &available_tokens[i];
+    char curr = text->str[0];
+    char next = text->size == 1 ? '\0' : text->str[1];
+    token_str->size += 1;
+
+    switch (curr) {
+        case '+': {
+            parsed_token.val.type = PLUS;
             return parsed_token;
         }
+        case '-': {
+            parsed_token.val.type = MINUS; 
+            return parsed_token;
+        }
+        case '/': {
+            parsed_token.val.type = DIVISION; 
+            return parsed_token;
+        }
+        case '%': {
+            parsed_token.val.type = DIVISION_REMINDER; 
+            return parsed_token;
+        }
+        case '*': {
+            parsed_token.val.type = match_and_iterate(next, '*', token_str) ? POW : MULTIPLY;
+            return parsed_token;
+        }
+        case '=': {
+            parsed_token.val.type = match_and_iterate(next, '=', token_str) ? EQ : ASSIGN;
+            return parsed_token;
+        }
+        case '<': {
+            parsed_token.val.type = match_and_iterate(next, '=', token_str) ? LESS_EQ : LESS;
+            return parsed_token;
+        }
+        case '>': {
+            parsed_token.val.type = match_and_iterate(next, '=', token_str) ? GREATER_EQ : GREATER;
+            return parsed_token;
+        }
+        case '!': {
+            if (match_and_iterate(next, '=', token_str)) {
+                parsed_token.val.type = NOT_EQ;
+            } else {
+                parsed_token.has_token = false;
+            }
+            return parsed_token;
+        }
+        case 'n': {
+            if (match_word_and_iterate(*text, "not", token_str)) {
+                parsed_token.val.type = NOT;
+                return parsed_token;
+            }
+        }
+        case 'a': {
+            if (match_word_and_iterate(*text, "and", token_str)) {
+                parsed_token.val.type = AND;
+                return parsed_token;
+            }
+        }
+        case 'o': {
+            if (match_word_and_iterate(*text, "or", token_str)) {
+                parsed_token.val.type = OR;
+                return parsed_token;
+            }
+        }
+        default: {
+            if (is_digit(curr)) {
+                for (uint64_t i = 1; i < text->size && is_digit(text->str[i]); ++i) { ++token_str->size; }
+                parsed_token.val.type = NUMBER;
+                return parsed_token;
+            } else if (is_alpha(curr)) {
+                for (uint64_t i = 1; i < text->size && is_ident_body_symbol(text->str[i]); ++i) { ++token_str->size; }
+                parsed_token.val.type = IDENTIFIER;
+                return parsed_token;
+            }
+        }
     }
+
+    parsed_token.has_token = false;
     return parsed_token;
 }
 
-ParsedTokensArr parse(const char* input, const Token* available_tokens, uint64_t available_tokens_size, String* errors) {
+ParsedTokensArr parse(const char* input, String* errors) {
     const String text = {.str = input, .size = my_strlen(input)};
 
     ParsedTokensArr parsed_tokens = {.tokens = NULL, .size = 0, .capacity = 0};  // TODO: use initialization func
@@ -131,7 +223,7 @@ ParsedTokensArr parse(const char* input, const Token* available_tokens, uint64_t
             continue;
         }
         String temp_str = {.str = &text.str[curr], .size = text.size - curr};
-        TokenOpt token_opt = try_to_parse_token(&temp_str, available_tokens, available_tokens_size, errors);
+        TokenOpt token_opt = try_to_parse_token(&temp_str, errors);
         if (token_opt.has_token && token_opt.val.text.size > 0) {
             copy_to_arr(&parsed_tokens, &token_opt.val);
             curr += token_opt.val.text.size;

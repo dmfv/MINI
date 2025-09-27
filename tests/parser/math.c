@@ -3,7 +3,7 @@
 
 ///////////////////////// TESTS /////////////////////////
 ParsedTokensArr just_parse(const char* input) {
-    return parse(input, AVAILABLE_TOKENS, SIZE(AVAILABLE_TOKENS), NULL);
+    return parse(input, NULL);
 }
 
 // TODO: consider to move data to text files
