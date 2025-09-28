@@ -49,8 +49,8 @@ static int my_strcmp_string(const String* l, const char* r) {
     if ((l) != (r)) { \
         char buf[256]; \
         snprintf(buf, sizeof(buf), \
-            ANSI_COLOR_RED "ASSERT_INT_EQ failed: %s=%d, %s=%d" ANSI_COLOR_RESET, \
-            #l, (int)(l), #r, (int)(r)); \
+            ANSI_COLOR_RED "ASSERT_INT_EQ failed: %s=%d, %s=%d. Func: %s:%d" ANSI_COLOR_RESET, \
+            #l, (int)(l), #r, (int)(r), __PRETTY_FUNCTION__, __LINE__); \
         add_new_log_line(strdup(buf)); \
     } \
 } while(0)
@@ -59,8 +59,8 @@ static int my_strcmp_string(const String* l, const char* r) {
     if (my_strcmp_string(&(l), (r)) != 0) { \
         char buf[256]; \
         snprintf(buf, sizeof(buf), \
-            ANSI_COLOR_RED "ASSERT_STRING_EQ_C_STRING failed: %s=\"%.*s\", %s=\"%s\"" ANSI_COLOR_RESET, \
-            #l, (int)(l).size, (l).str, #r, (r)); \
+            ANSI_COLOR_RED "ASSERT_STRING_EQ_C_STRING failed: %s=\"%.*s\", %s=\"%s\". Func: %s:%d" ANSI_COLOR_RESET, \
+            #l, (int)(l).size, (l).str, #r, (r), __PRETTY_FUNCTION__, __LINE__); \
         add_new_log_line(strdup(buf)); \
     } \
 } while(0)

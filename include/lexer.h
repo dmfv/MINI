@@ -85,6 +85,10 @@ typedef struct {
     bool has_token;
 } TokenOpt;
 
+bool match(char r, char l) {
+    return r == l;
+}
+
 bool match_and_iterate(char r, char l, String* str) {
     if (r == l) {
         str->size += 1;
@@ -167,6 +171,22 @@ TokenOpt try_to_parse_token(const String* text, String* error) {
             parsed_token.val.type = match_and_iterate(next, '=', token_str) ? GREATER_EQ : GREATER;
             return parsed_token;
         }
+        case '(': {
+            parsed_token.val.type = OPEN_PAREN; 
+            return parsed_token;
+        }
+        case ')': {
+            parsed_token.val.type = CLOSE_PAREN;
+            return parsed_token;
+        }
+        case '[': {
+            parsed_token.val.type = OPEN_BRACKET; 
+            return parsed_token;
+        }
+        case ']': {
+            parsed_token.val.type = CLOSE_BRACKET;
+            return parsed_token;
+        }
         case '!': {
             if (match_and_iterate(next, '=', token_str)) {
                 parsed_token.val.type = NOT_EQ;
@@ -194,7 +214,7 @@ TokenOpt try_to_parse_token(const String* text, String* error) {
             }
         }
         default: {
-            if (is_digit(curr)) {
+            if (is_digit(curr)) {  // TODO: consider to add errors because "123 abc" - is valid tokens but "123abc" - no
                 for (uint64_t i = 1; i < text->size && is_digit(text->str[i]); ++i) { ++token_str->size; }
                 parsed_token.val.type = NUMBER;
                 return parsed_token;
@@ -228,7 +248,19 @@ ParsedTokensArr parse(const char* input, String* errors) {
             copy_to_arr(&parsed_tokens, &token_opt.val);
             curr += token_opt.val.text.size;
         } else {
-            ++curr;
+            // here we also skip [' ', '\n', '\t', '\r']
+            // TODO: here we can have some problems (when token not parsed)
+            if (match(text.str[curr], ' ') 
+                || match(text.str[curr], '\t')
+                || match(text.str[curr], '\n')
+                || match(text.str[curr], '\r'))
+            {
+                ++curr;
+            } else {
+                // NB: not sure we wants here deinit. deinit_parsed_tokens_arr(&parsed_tokens);
+                // maybe user can check last correctly parsed token
+                return parsed_tokens;
+            }
         }
     }
     return parsed_tokens;

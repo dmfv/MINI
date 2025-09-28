@@ -25,10 +25,12 @@ typedef enum {
     GREATER_EQ,  // >=
 
     // othes
-    NUMBER,       // 42
-    IDENTIFIER,   // abc
-    OPEN_PAREN,   // (
-    CLOSE_PAREN,  // (
+    NUMBER,        // 42
+    IDENTIFIER,    // abc
+    OPEN_PAREN,    // (
+    CLOSE_PAREN,   // (
+    OPEN_BRACKET,  // [ (not used for now)
+    CLOSE_BRACKET, // ] (not used for now)
 } TokenType;
 
 typedef struct {
