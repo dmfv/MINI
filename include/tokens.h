@@ -81,7 +81,7 @@ void copy_to_any_arr(void** arr, uint64_t* size, uint64_t* capacity, void* what_
 
 void copy_to_arr(ParsedTokensArr* arr, Token* token) {
     return copy_to_any_arr(
-        (void*)&arr->tokens,
+        (void**)&arr->tokens,
         &arr->size, 
         &arr->capacity, 
         (void*)token, 
