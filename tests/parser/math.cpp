@@ -1,137 +1,97 @@
-#include "include/lexer.h"
-#include "tests/test_helpers.h"
+#include <gtest/gtest.h>
+#include <vector>
 
-///////////////////////// TESTS /////////////////////////
-ParsedTokensArr just_parse(const char* input) {
+extern "C" {
+#include "include/lexer.h"
+}
+
+static ParsedTokensArr just_parse(const char* input) {
     return parse(input, NULL);
 }
 
-// TODO: consider to move data to text files
-TEST(parse_plus_operation) {
+// helper to compare custom String and const char*
+static void AssertStringEq(const String& actual, const char* expected, size_t index = 0) {
+    ASSERT_EQ(actual.size, strlen(expected)) << "Token length mismatch at index " << index;
+    ASSERT_TRUE(strncmp(actual.str, expected, actual.size) == 0)
+        << "Token content mismatch at index " << index << ": got '" << std::string(actual.str, actual.size)
+        << "', expected '" << expected << "'";
+}
+
+
+// Helper to compare parsed tokens with expected C-strings.
+static void AssertTokensEqual(const ParsedTokensArr& arr, const std::vector<const char*>& expected) {
+    // Ensure sizes match (cast to size_t to avoid signed/unsigned warnings)
+    ASSERT_EQ(static_cast<size_t>(arr.size), expected.size());
+
+    for (size_t i = 0; i < expected.size(); ++i) {
+        AssertStringEq(arr.tokens[i].text, expected[i]);
+    }
+}
+
+// --- Tests ---
+
+TEST(Lexer, ParsePlusOperation) {
     ParsedTokensArr tokens_arr = just_parse("123 + 1");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "123");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "+");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "1");
+    AssertTokensEqual(tokens_arr, {"123", "+", "1"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_minus_operation) {
+TEST(Lexer, ParseMinusOperation) {
     ParsedTokensArr tokens_arr = just_parse("42 - 31");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "42");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "-");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "31");
+    AssertTokensEqual(tokens_arr, {"42", "-", "31"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_power_operation) {
+TEST(Lexer, ParsePowerOperation) {
     ParsedTokensArr tokens_arr = just_parse("1500 ** 31");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "1500");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "**");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "31");
+    AssertTokensEqual(tokens_arr, {"1500", "**", "31"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_mul_operation) {
-    ParsedTokensArr tokens_arr = just_parse("1500 * 31");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "1500");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "*");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "31");
-    deinit_parsed_tokens_arr(&tokens_arr);
-}
-
-TEST(parse_pow_operation) {
+TEST(Lexer, ParsePowOperation) {
     ParsedTokensArr tokens_arr = just_parse("2 ** 3");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "2");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "**");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "3");
+    AssertTokensEqual(tokens_arr, {"2", "**", "3"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_parentesis_operation) {
-    ParsedTokensArr tokens_arr = just_parse("2 * (3 + 1)");
-    ASSERT_INT_EQ(tokens_arr.size, 7);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "2");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "*");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "(");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[3].text, "3");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[4].text, "+");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[5].text, "1");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[6].text, ")");
+TEST(Lexer, ParseMulOperation) {
+    ParsedTokensArr tokens_arr = just_parse("1500 * 31");
+    AssertTokensEqual(tokens_arr, {"1500", "*", "31"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_div_operation) {
+TEST(Lexer, ParseDivOperation) {
     ParsedTokensArr tokens_arr = just_parse("1500 / 31");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "1500");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "/");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "31");
+    AssertTokensEqual(tokens_arr, {"1500", "/", "31"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_div_reminder_operation) {
+TEST(Lexer, ParseDivReminderOperation) {
     ParsedTokensArr tokens_arr = just_parse("1500 % 31");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "1500");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "%");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "31");
+    AssertTokensEqual(tokens_arr, {"1500", "%", "31"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_identifier_operation) {
+TEST(Lexer, ParseParenthesisOperation) {
+    ParsedTokensArr tokens_arr = just_parse("2 * (3 + 1)");
+    AssertTokensEqual(tokens_arr, {"2", "*", "(", "3", "+", "1", ")"});
+    deinit_parsed_tokens_arr(&tokens_arr);
+}
+
+TEST(Lexer, ParseIdentifierOperation) {
     ParsedTokensArr tokens_arr = just_parse("abc123 + a2");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "abc123");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "+");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "a2");
+    AssertTokensEqual(tokens_arr, {"abc123", "+", "a2"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_eq_operation) {
+TEST(Lexer, ParseEqOperation) {
     ParsedTokensArr tokens_arr = just_parse("a == 10");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "a");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "==");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "10");
+    AssertTokensEqual(tokens_arr, {"a", "==", "10"});
     deinit_parsed_tokens_arr(&tokens_arr);
 }
 
-TEST(parse_assign_operation) {
+TEST(Lexer, ParseAssignOperation) {
     ParsedTokensArr tokens_arr = just_parse("name  =  42");
-    ASSERT_INT_EQ(tokens_arr.size, 3);
-
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[0].text, "name");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[1].text, "=");
-    ASSERT_STRING_EQ_C_STRING(tokens_arr.tokens[2].text, "42");
+    AssertTokensEqual(tokens_arr, {"name", "=", "42"});
     deinit_parsed_tokens_arr(&tokens_arr);
-}
-
-void run_tests() {
-    test_parse_plus_operation();
-    test_parse_minus_operation();
-    test_parse_power_operation();
-    test_parse_pow_operation();
-    test_parse_parentesis_operation();
-    test_parse_mul_operation();
-    test_parse_div_operation();
-    test_parse_div_reminder_operation();
-
-    test_parse_identifier_operation();
-    test_parse_eq_operation();
-    test_parse_assign_operation();
 }
