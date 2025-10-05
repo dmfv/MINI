@@ -1,7 +1,14 @@
 CC      = gcc
 CXX     = g++
 CFLAGS  = -Wall -Wextra -g -I./
-CXXFLAGS= -Wall -Wextra -g -I3rdParty/googletest/googletest -I3rdParty/googletest/googletest/include -I./
+CXXFLAGS= \
+	-Wall \
+	-Wextra \
+	-Wimplicit-fallthrough=0 \
+	-g \
+	-I3rdParty/googletest/googletest \
+	-I3rdParty/googletest/googletest/include \
+	-I./
 GTEST   = 3rdParty/googletest/googletest
 
 # output dirs
