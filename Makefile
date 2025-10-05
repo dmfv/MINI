@@ -21,7 +21,7 @@ TESTBIN = $(BIN)/tests
 
 # sources
 PROJ_SRC = lang.c
-TEST_SRC = tests/parser/math.cpp
+TEST_SRC = tests/lexer/lexer.cpp
 GTEST_SRC= $(GTEST)/src/gtest-all.cc $(GTEST)/src/gtest_main.cc
 
 all: $(PROJECT)
